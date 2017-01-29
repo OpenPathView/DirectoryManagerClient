@@ -21,7 +21,7 @@ import ftputil
 import os
 from urllib.parse import urlparse
 
-from opv_directorymanagerclient.directoryuuid import DirectoryUuid
+from opv_directorymanagerclient.directoryuuid import DirectoryUuid, SyncableDirectory
 from opv_directorymanagerclient import Protocol
 
 # https://docs.python.org/3/library/urllib.parse.html
@@ -40,64 +40,13 @@ class FTPAnonSessionWithPort(ftplib.FTP):
         else:
             self.login()
 
-class SyncableFolder:
-
-    def __init__(self, dir_uuid_path, os_utils):
-        """
-        :param dir_uuid_path: UUID directory path.
-        :param os_utils: OS lib (like os), must implement : os_utils.walk, os_utils.path.join and os_utils.path.relpath.
-        """
-        self.os_utils = os_utils
-        self.dir_uuid_path = dir_uuid_path
-
-    def rel_walk(self):
-        """
-        Act like os.walk, but elements of tuple relative path to dir_uuid_path so that it can be easily used in an other context.
-        """
-        for (dir_full_path, dir_names, files_names) in self.os_utils.walk(self.dir_uuid_path):
-            yield (self._get_rel_path(dir_full_path), dir_names, files_names)
-
-    def _make_dir(self, rel_path):
-        """
-        Make dir with sub directories.
-        :param rel_path: relative path.
-        """
-        logging.debug("_make_dir: rel_path=" + rel_path)
-        dest = self.os_utils.path.join(self.dir_uuid_path, rel_path)
-        return self.os_utils.makedirs(dest)
-
-    def make_dirs(self, rel_paths):
-        """
-        Make directories with their relative paths (relative to the syncable folder location).
-        """
-        for p in rel_paths:
-            self._make_dir(p)
-
-    def cp_files(self, relatives_files_paths, src, cp_file_method):
-        for rel_path in relatives_files_paths:
-            cp_file_method(rel_path, src, self)
-
-    def _get_rel_path(self, full_path):
-        """
-         Return relative path from full_path. Relative to dir_uuid_path.
-        """
-        return os.path.relpath(full_path, start=self.dir_uuid_path)
-
-    def get_full_path(self, rel_path=None):
-        """
-        Return full paths (absolute FTP path or local path) with a relative to uuid directory path.
-        :param rel_path: Optional, relative path if not specified will simply return the full path associated to directory UUID.
-        """
-        return self.os_utils.path.join(self.dir_uuid_path, rel_path) if rel_path is not None else self.dir_uuid_path
 
 class DirectoryUuidFtp(DirectoryUuid):
 
     def __init__(self, *args, **kwargs):
-        DirectoryUuid.__init__(self, *args, **kwargs)
-
         self.__ftp_host = None
-        self.syncable_ftp = None
-        self.syncable_local = SyncableFolder(self._local_directory, os)
+        self._syncable_ftp = None
+        DirectoryUuid.__init__(self, *args, **kwargs)
 
     def __connectFtp(self, uri: str):
         """
@@ -111,7 +60,7 @@ class DirectoryUuidFtp(DirectoryUuid):
             port=parsed_uri.port,
             session_factory=FTPAnonSessionWithPort)
         self.__ftp_host.chdir(parsed_uri.path)
-        self.syncable_ftp = SyncableFolder(parsed_uri.path, self.__ftp_host)
+        self._syncable_ftp = SyncableDirectory(parsed_uri.path, self.__ftp_host)
 
     def _ensure_ftp_connexion(self):
         """
@@ -120,7 +69,7 @@ class DirectoryUuidFtp(DirectoryUuid):
         if self.__ftp_host is None:
             self.__connectFtp(self._fetch_uri(protocol=Protocol.FTP))
 
-    def __local_to_ftp_cp_file(self, rel_path: str, src: SyncableFolder, dest: SyncableFolder):
+    def __local_to_ftp_cp_file(self, rel_path: str, src: SyncableDirectory, dest: SyncableDirectory):
         """
         Atomic cp file from local -> FTP.
         :param rel_path: Relative path to directoryuuid root.
@@ -145,16 +94,16 @@ class DirectoryUuidFtp(DirectoryUuid):
         Push files to FTP server.
         """
         self._ensure_ftp_connexion()
-        self.__sync(self.syncable_local, self.syncable_ftp, self.__local_to_ftp_cp_file)
+        self.__sync(self._syncable_local, self._syncable_ftp, self.__local_to_ftp_cp_file)
 
     def _pull_files(self):
         """
         Pull files from FTP server.
         """
         self._ensure_ftp_connexion()
-        self.__sync(self.syncable_ftp, self.syncable_local, self.__ftp_to_local_cp_file)
+        self.__sync(self._syncable_ftp, self._syncable_local, self.__ftp_to_local_cp_file)
 
-    def __sync(self, src: SyncableFolder, dest: SyncableFolder, cp_file_method):
+    def __sync(self, src: SyncableDirectory, dest: SyncableDirectory, cp_file_method):
         """
         Sync 2 folders.
         :param src: SyncableFolder source directory.

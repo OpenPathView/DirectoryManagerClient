@@ -21,10 +21,12 @@ import logging
 from tempfile import mkdtemp
 from opv_directorymanagerclient import Protocol
 from opv_directorymanagerclient import OPVDMCException
+from opv_directorymanagerclient.directoryuuid import SyncableDirectory
 
 class DirectoryUuid():
     """
     Manage a directory UUID.
+    implement a ContextManager that return a (uuid, local path).
     """
 
     def __init__(self, workspace_directory, api_base: str, uuid=None):
@@ -38,6 +40,10 @@ class DirectoryUuid():
         self.__workspace_directory = workspace_directory
         self._uuid = uuid if uuid is not None else self.__generate_uuid()
         self.__create_local_directory()
+
+        # Fetching files for existing uuids
+        if uuid is not None:
+            self._pull_files()
 
     def __generate_uuid(self):
         """
@@ -71,6 +77,7 @@ class DirectoryUuid():
          Create a working directory will be associated to the uuid directory.
         """
         self.__local_directory = mkdtemp(dir=self.__workspace_directory)
+        self._syncable_local = SyncableDirectory(self.local_directory, os)
         logging.debug("Create local directory '" + str(self.__local_directory) + "' associated to uuid : " + str(self._uuid))
 
     def __delete_local_directory(self):
@@ -98,14 +105,36 @@ class DirectoryUuid():
         self._push_files()
 
     @property
-    def _local_directory(self):
+    def local_directory(self):
         """
          Return the directory where files are stored locally.
         """
         return self.__local_directory
 
+    @property
+    def uuid(self):
+        """
+        Return uuid.
+        """
+        return self._uuid
+
+    def __enter__(self):
+        """
+         Context manager, enter.
+         Do nothing as the pull action is already done at __init__.
+         :return: Return (uuid, local_path).
+        """
+        return (self._uuid, self.local_directory)
+
+    def __exit__(self, type, value, traceback):
+        """
+        Context manager.
+        Save files back to server.
+        """
+        self.save()
+
     def __del__(self):
         """
-        Save files back to server
+        Save files back to server. Might not be called.
         """
         self.save()

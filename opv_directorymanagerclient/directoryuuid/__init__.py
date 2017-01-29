@@ -15,5 +15,6 @@
 # Contributors: Benjamin BERNARD
 # Email: benjamin.bernard@openpathview.fr
 
+from opv_directorymanagerclient.directoryuuid.syncabledirectory import SyncableDirectory
 from opv_directorymanagerclient.directoryuuid.directoryuuid import DirectoryUuid
 from opv_directorymanagerclient.directoryuuid.directoryuuidftp import DirectoryUuidFtp
