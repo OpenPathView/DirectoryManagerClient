@@ -23,6 +23,8 @@ from opv_directorymanagerclient import Protocol
 from opv_directorymanagerclient import OPVDMCException
 from opv_directorymanagerclient.directoryuuid import SyncableDirectory
 
+from pprint import pprint
+
 class DirectoryUuid():
     """
     Manage a directory UUID.
@@ -39,6 +41,8 @@ class DirectoryUuid():
         self.__api_base = api_base
         self.__workspace_directory = workspace_directory
         self._uuid = uuid if uuid is not None else self.__generate_uuid()
+        self._syncable_local = None
+        self._syncable_remote = None  # User need to define it in their implementation
         self.__create_local_directory()
 
         # Fetching files for existing uuids
@@ -64,7 +68,7 @@ class DirectoryUuid():
         :param protocol: Wanted protocol URI.
         """
         logging.debug("_fetch_uri")
-        rep = requests.get(self.__api_base + "/v1/directory/" + self._uuid)
+        rep = requests.get(self.__api_base + "/v1/directory/" + self._uuid + "/" + protocol.value)
 
         if rep.status_code != 200:
             raise OPVDMCException("Can't generate UUID", rep)
@@ -86,17 +90,67 @@ class DirectoryUuid():
         """
         os.removedirs(self.__local_directory)
 
+    def _ensure_remote_connexion(self):
+        """
+        Ensure connexion to remote.
+        """
+        raise NotImplemented()
+
+    def __sync(self, src: SyncableDirectory, dest: SyncableDirectory, cp_file_method):
+        """
+        Sync 2 folders.
+        :param src: SyncableFolder source directory.
+        :param dest: SyncableFolder destination directory.
+        :param cp_file_method: Function use to transfert a file from source to destination.
+                               This function takes (rel_path, srcSyncFolder, desSyncFolder).
+        """
+
+        for (src_path, dir_names, file_names) in src.rel_walk():
+            logging.debug("__sync: src_path=" + src_path)
+            pprint(dir_names)
+            pprint(file_names)
+
+            # creating directories
+            dir_relative_paths = [os.path.join(src_path, d_name) for d_name in dir_names]
+            dest.make_dirs(dir_relative_paths)
+
+            # copy files
+            file_relative_paths = [os.path.join(src_path, f_name) for f_name in file_names]
+            dest.cp_files(file_relative_paths, src, cp_file_method)
+
+    def _cp_file_push_method(self, rel_path: str, src: SyncableDirectory, dest: SyncableDirectory):
+        """
+        Method used to cp files from local to remote (upload file).
+        Needs to be defined in user implementation.*
+        :param rel_path: Relative path to directoryuuid root of file we want to copy.
+        :param src: Source directory (should be local).
+        :param dest: Destination directory (should be remote).
+        """
+        raise NotImplemented()
+
+    def _cp_file_pull_method(self, rel_path: str, src: SyncableDirectory, dest: SyncableDirectory):
+        """
+        Method used to cp files from remote to local (download file).
+        Needs to be defined in user implementation.*
+        :param rel_path: Relative path to directoryuuid root of file we want to copy.
+        :param src: Source directory (should be remote).
+        :param dest: Destination directory (should be local).
+        """
+        raise NotImplemented()
+
     def _pull_files(self):
         """
         Import and copy existing data to local_directory
         """
-        raise NotImplemented()
+        self._ensure_remote_connexion()
+        self.__sync(self._syncable_remote, self._syncable_local, self._cp_file_pull_method)
 
     def _push_files(self):
         """
         Push local_directory files to server.
         """
-        raise NotImplemented()
+        self._ensure_remote_connexion()
+        self.__sync(self._syncable_local, self._syncable_remote, self._cp_file_push_method)
 
     def save(self):
         """

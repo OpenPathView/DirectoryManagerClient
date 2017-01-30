@@ -21,7 +21,7 @@ import logging
 from tempfile import TemporaryDirectory
 from opv_directorymanagerclient import OPVDMCException
 from opv_directorymanagerclient import Protocol
-from opv_directorymanagerclient import DirectoryUuidFtp
+from opv_directorymanagerclient import DirectoryUuidFtp, DirectoryUuidFile
 
 class DirectoryManagerClient:
     """
@@ -73,6 +73,8 @@ class DirectoryManagerClient:
         """
         if self.__default_protocol == Protocol.FTP:
             return DirectoryUuidFtp(uuid=uuid, api_base=self.__api_base, workspace_directory=self.__workspace_directory)
+        if self.__default_protocol == Protocol.FILE:
+            return DirectoryUuidFile(uuid=uuid, api_base=self.__api_base, workspace_directory=self.__workspace_directory)
         raise NotImplemented
 
     @property
