@@ -59,7 +59,7 @@ class DirectoryUuid():
         if rep.status_code != 200:
             raise OPVDMCException("Can't generate UUID", rep)
 
-        self._uuid = rep.text
+        self._uuid = rep.json()
         return self._uuid
 
     def _fetch_uri(self, protocol: Protocol):
@@ -73,7 +73,7 @@ class DirectoryUuid():
         if rep.status_code != 200:
             raise OPVDMCException("Can't generate UUID", rep)
 
-        self._uri = rep.text
+        self._uri = rep.json()
         return self._uri
 
     def __create_local_directory(self):

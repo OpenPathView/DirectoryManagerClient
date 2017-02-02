@@ -45,7 +45,9 @@ class SyncableDirectory:
         """
         logging.debug("_make_dir: rel_path=" + rel_path)
         dest = self.os_utils.path.join(self.dir_uuid_path, rel_path)
-        return self.os_utils.makedirs(dest)
+
+        if not self.os_utils.path.exists(dest):
+            return self.os_utils.makedirs(dest)
 
     def make_dirs(self, rel_paths):
         """
