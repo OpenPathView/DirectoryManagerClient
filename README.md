@@ -7,6 +7,11 @@ This client can use both FTP and local protocoles to fetch files from the storag
 
 ## How to use it
 
+###
+```
+from opv_directorymanagerclient import DirectoryManagerClient
+```
+
 ## Launch tests
 
 ## TODO
