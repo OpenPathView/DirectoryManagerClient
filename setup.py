@@ -30,7 +30,6 @@ setup(
         "requests",
         "ftputil"
     ],
-    packages=['opv_directorymanagerclient'],
     # Active la prise en compte du fichier MANIFEST.in
     include_package_data=False,
     url='https://github.com/OpenPathView/DirectoryManagerClient',
