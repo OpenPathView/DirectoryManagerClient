@@ -62,7 +62,7 @@ class DirectoryManagerClient:
         logging.debug("__fetch_protocols")
         r = requests.get(self.__api_base + "/v1/protocols")
         if r.status_code != 200:
-            raise OPVDMCException("Unable to get supported protocols (got HTTP status " + r.status_code)
+            raise OPVDMCException("Unable to get supported protocols (got HTTP status " + str(r.status_code))
 
         return list(filter(None.__ne__, map(self.__str2Protocol, r.json())))
 
