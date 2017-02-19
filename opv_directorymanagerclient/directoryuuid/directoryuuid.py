@@ -23,8 +23,6 @@ from opv_directorymanagerclient import Protocol
 from opv_directorymanagerclient import OPVDMCException
 from opv_directorymanagerclient.directoryuuid import SyncableDirectory
 
-from pprint import pprint
-
 class DirectoryUuid():
     """
     Manage a directory UUID.
@@ -107,8 +105,6 @@ class DirectoryUuid():
 
         for (src_path, dir_names, file_names) in src.rel_walk():
             logging.debug("__sync: src_path=" + src_path)
-            pprint(dir_names)
-            pprint(file_names)
 
             # creating directories
             dir_relative_paths = [os.path.join(src_path, d_name) for d_name in dir_names]
