@@ -33,7 +33,10 @@ setup(
     # Active la prise en compte du fichier MANIFEST.in
     include_package_data=False,
     url='https://github.com/OpenPathView/DirectoryManagerClient',
-
+    entry_points={
+        'console_scripts': [
+            'opv-dm-client = opv_directorymanagerclient.__main__:main']
+    },
     scripts=[],
 
     license="GPL3",
