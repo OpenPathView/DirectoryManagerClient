@@ -66,15 +66,16 @@ class DirectoryManagerClient:
 
         return list(filter(None.__ne__, map(self.__str2Protocol, r.json())))
 
-    def Open(self, uuid=None):
+    def Open(self, uuid=None, autosave=True):
         """
         Get a directory form it's uuid or create one.
         :param uuid: Optional directory's uuid.
+        :param autosave: Save back to the server at ext/close (default: True).
         """
         if self.__default_protocol == Protocol.FTP:
-            return DirectoryUuidFtp(uuid=uuid, api_base=self.__api_base, workspace_directory=self.__workspace_directory)
+            return DirectoryUuidFtp(uuid=uuid, api_base=self.__api_base, workspace_directory=self.__workspace_directory, autosave=autosave)
         if self.__default_protocol == Protocol.FILE:
-            return DirectoryUuidFile(uuid=uuid, api_base=self.__api_base, workspace_directory=self.__workspace_directory)
+            return DirectoryUuidFile(uuid=uuid, api_base=self.__api_base, workspace_directory=self.__workspace_directory, autosave=autosave)
         raise NotImplemented
 
     @property

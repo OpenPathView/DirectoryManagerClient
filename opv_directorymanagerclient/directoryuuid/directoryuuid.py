@@ -29,12 +29,13 @@ class DirectoryUuid():
     implement a ContextManager that return a (uuid, local path).
     """
 
-    def __init__(self, workspace_directory, api_base: str, uuid=None):
+    def __init__(self, workspace_directory, api_base: str, uuid=None, autosave=True):
         """
         :param uuid: Directory UUID.
         :param api_base: Api base URL.
         :param work_directory: Local directory used to store file. If you use local protocol you may use
                                a folder on the same partition so that cp will be hard link.
+        :param autosave: Save changed data on the server at exit or context manager close (Default: True).
         """
         self.__api_base = api_base
         self.__workspace_directory = workspace_directory
@@ -42,6 +43,7 @@ class DirectoryUuid():
         self._syncable_local = None
         self._syncable_remote = None  # User need to define it in their implementation
         self.__create_local_directory()
+        self._autosave = autosave
 
         # Fetching files for existing uuids
         if uuid is not None:
@@ -181,10 +183,12 @@ class DirectoryUuid():
         Context manager.
         Save files back to server.
         """
-        self.save()
+        if self._autosave:
+            self.save()
 
     def __del__(self):
         """
         Save files back to server. Might not be called.
         """
-        self.save()
+        if self._autosave:
+            self.save()
