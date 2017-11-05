@@ -8,14 +8,38 @@ This client can use both FTP and local protocoles to fetch files from the storag
 ## How to use it
 
 ###
-```
-from opv_directorymanagerclient import DirectoryManagerClient
+```python
+from opv_directorymanagerclient import DirectoryManagerClient, Protocol
+
+dm_client = DirectoryManagerClient(api_base="http://opv_master:5005", default_protocol=Protocol.FTP)
+uuid = None
+
+# Create a directory with context manager
+with dm_client.Open() as (dir_uuid, dir_path):
+    uuid = dir_uuid
+    with open(dir_path + "/test_file.txt", "w") as f:
+        f.write("test for {}".format(uuid))
+
+# Create directory without context manager
+d = dm_client.Open()
+print("uuid : {} - path : {}".format(d.uuid, d.local_directory))
+with open(d.local_directory + "/test_file.txt", "w") as f:
+    f.write("test for {}".format(d.uuid))
+d.save()
+
+# Open existing directory
+with dm_client.Open(uuid=uuid) as (_, dir_path):
+    with open(dir_path + "/test_file.txt", "r") as f:
+        print(f.readlines())
+
+# Open existing directory without context manager
+d = dm_client.Open(uuid=uuid)
+with open(d.local_directory + "/test_file.txt", "r") as f:
+    print(f.readlines())
+d.close()
 ```
 
 ## Launch tests
-
-## TODO
-Make the client :)
 
 ## License
 

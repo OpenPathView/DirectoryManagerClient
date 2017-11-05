@@ -15,8 +15,10 @@
 # Contributors: Benjamin BERNARD
 # Email: benjamin.bernard@openpathview.fr
 import os
-import requests
+import shutil
 import logging
+import requests
+from path import Path
 
 from tempfile import mkdtemp
 from opv_directorymanagerclient import Protocol
@@ -88,7 +90,8 @@ class DirectoryUuid():
         """
         Remove directory associated to uuid directory.
         """
-        os.removedirs(self.__local_directory)
+        if Path(self.__local_directory).isdir():
+            shutil.rmtree(self.__local_directory)
 
     def _ensure_remote_connexion(self):
         """
@@ -155,6 +158,13 @@ class DirectoryUuid():
         Save files back to server
         """
         self._push_files()
+        self.__delete_local_directory()
+
+    def close(self):
+        """
+        Close and clean stuff without saving.
+        """
+        self.__delete_local_directory()
 
     @property
     def local_directory(self):
@@ -185,6 +195,7 @@ class DirectoryUuid():
         """
         if self._autosave:
             self.save()
+        self.close()
 
     def __del__(self):
         """
@@ -192,3 +203,4 @@ class DirectoryUuid():
         """
         if self._autosave:
             self.save()
+        self.close()
