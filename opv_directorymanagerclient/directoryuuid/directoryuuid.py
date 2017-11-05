@@ -158,11 +158,11 @@ class DirectoryUuid():
         Save files back to server
         """
         self._push_files()
-        self.__delete_local_directory()
 
     def close(self):
         """
         Close and clean stuff without saving.
+        Add connexion close when you subclass.
         """
         self.__delete_local_directory()
 
@@ -192,14 +192,6 @@ class DirectoryUuid():
         """
         Context manager.
         Save files back to server.
-        """
-        if self._autosave:
-            self.save()
-        self.close()
-
-    def __del__(self):
-        """
-        Save files back to server. Might not be called.
         """
         if self._autosave:
             self.save()

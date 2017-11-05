@@ -86,3 +86,16 @@ class DirectoryUuidFtp(DirectoryUuid):
         """
         logging.debug("__ftp_to_local_cp_file: " + str(src.get_full_path(rel_path)) + " -> " + str(dest.get_full_path(rel_path)))
         self.__ftp_host.download_if_newer(src.get_full_path(rel_path), dest.get_full_path(rel_path))
+
+    def get_ftp_host(self):
+        """
+        Return ftp host object.
+        """
+        return self.__ftp_host
+
+    def close(self):
+        """
+        Close FTP connexion.
+        """
+        self.__ftp_host.close()
+        DirectoryUuid.close(self)

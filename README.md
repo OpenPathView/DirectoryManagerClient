@@ -26,6 +26,7 @@ print("uuid : {} - path : {}".format(d.uuid, d.local_directory))
 with open(d.local_directory + "/test_file.txt", "w") as f:
     f.write("test for {}".format(d.uuid))
 d.save()
+d.close()
 
 # Open existing directory
 with dm_client.Open(uuid=uuid) as (_, dir_path):
